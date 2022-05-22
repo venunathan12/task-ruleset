@@ -1,4 +1,4 @@
-__version__ = "0.0.0"
+__version__ = "0.0.2"
 
 from multiprocessing import Process, Manager
 import os, sys, time
@@ -7,6 +7,9 @@ NGuests = 4
 Rules = {}
 InitTask = None
 TasksAssignedToProcess = None
+
+ProcessDict = {}
+ProcessInit = None
 
 class Task:
     def __init__(self, TaskType, TaskKey, TaskData):
@@ -18,7 +21,7 @@ def Host(id, sharedDict):
     global TasksAssignedToProcess
 
     for i in range(1, NGuests + 1):
-        while i not in sharedDict.keys():
+        while i not in sharedDict.keys() or sharedDict[i] not in ("READY", "WAITING"):
             pass
 
     TasksAssignedToProcess = [0] * (NGuests + 1)
@@ -62,7 +65,7 @@ def Host(id, sharedDict):
             for key in list(TaskMap.keys()):
                 if len(TaskMap[key][1]) >= Rules[TaskMap[key][0]][0]:
                     for w, i in sorted(zip(TasksAssignedToProcess[1:], range(1, NGuests + 1))):
-                        if sharedDict[i] == "WAITING":
+                        if sharedDict[i] == "WAITING" and (len(Rules[TaskMap[key][0]]) < 3 or i in Rules[TaskMap[key][0]][2]):
                             sendMessageToGuest(i, Task(TaskMap[key][0], key, TaskMap[key][1])); del TaskMap[key]
                             TasksAssignedToProcess[i] += 1
                             break
@@ -72,6 +75,9 @@ def Host(id, sharedDict):
         sendMessageToGuest(i, "EXIT")
 
 def Guest(id, sharedDict):    
+    sharedDict[id] = "STARTING"
+    if ProcessInit is not None:
+        ProcessInit(id)
     sharedDict[id] = "READY"
 
     recvIdx, sendIdx = [0], [0]
