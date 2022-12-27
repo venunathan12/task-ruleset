@@ -1,4 +1,4 @@
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 
 from multiprocessing import Process, Manager
 import os, sys, time
@@ -9,6 +9,7 @@ InitTask = None
 TasksAssignedToProcess = None
 
 ProcessDict = {}
+CommonDict = None
 ProcessInit = None
 
 class Task:
@@ -17,9 +18,10 @@ class Task:
         self.TaskKey = TaskKey
         self.TaskData = TaskData
 
-def Host(id, sharedDict):
-    global TasksAssignedToProcess
+def Host(id, sharedDict, commonDict):
+    global TasksAssignedToProcess, CommonDict
 
+    CommonDict = commonDict
     for i in range(1, NGuests + 1):
         while i not in sharedDict.keys() or sharedDict[i] not in ("READY", "WAITING"):
             pass
@@ -74,8 +76,11 @@ def Host(id, sharedDict):
     for i in range(1, NGuests + 1):
         sendMessageToGuest(i, "EXIT")
 
-def Guest(id, sharedDict):    
+def Guest(id, sharedDict, commonDict): 
+    global CommonDict
+
     sharedDict[id] = "STARTING"
+    CommonDict = commonDict
     if ProcessInit is not None:
         ProcessInit(id)
     sharedDict[id] = "READY"
@@ -112,7 +117,7 @@ def Guest(id, sharedDict):
             if TASK.TaskType in Rules.keys() or True:
                 Rule = Rules[TASK.TaskType]
                 NewTasks = Rule[1](TASK.TaskKey, TASK.TaskData)
-                if NewTasks is not None and type(NewTasks) == type([]):
+                if NewTasks is not None:
                     for newTask in NewTasks:
                         if type(newTask) == Task:
                             sendMessageToHost(newTask)
@@ -127,14 +132,15 @@ def main():
     assert(type(InitTask.TaskData) == type([]))
 
     sharedDict = Manager().dict()
+    commonDict = Manager().dict()
 
     processList = []
     for i in range(1, NGuests + 1):
-        p = Process(target=Guest, args=(i, sharedDict))
+        p = Process(target=Guest, args=(i, sharedDict, commonDict))
         processList.append(p)
     
     for p in processList:
         p.start()
-    Host(0, sharedDict)
+    Host(0, sharedDict, commonDict)
     for p in processList:
         p.join()
