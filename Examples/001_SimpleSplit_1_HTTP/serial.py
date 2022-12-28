@@ -1,16 +1,12 @@
-import __helper as h
+import __helper as h, __params as p
 import time; startTimeStamp = time.time()
-
-
-# the list of numbers we wish to google
-numsToPull = range(1, 64 + 1)
 
 
 # create output folder
 outputPath = h.prepareOutputFolder()
 
-# for each number
-for num in numsToPull:
+# for each number in params
+for num in p.numsToGoogle:
     
     # search for the number on google and get the search results
     processedData = h.googleSearchNumber(num)

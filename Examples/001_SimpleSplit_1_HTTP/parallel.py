@@ -1,10 +1,6 @@
 import task_ruleset as trs
-import __helper as h
+import __helper as h, __params as p
 import time; startTimeStamp = time.time()
-
-
-# the list of numbers we wish to google
-numsToPull = range(1, 64 + 1)
 
 
 # The Generator which states how tasks of type 'init' need to be performed
@@ -16,8 +12,8 @@ def rule_init(TaskKey, TaskData):
     # record output path in a location accessible by all processes
     trs.CommonDict['OUTPUT_PATH'] = outputPath
 
-    # for each number
-    for num in numsToPull:
+    # for each number in params
+    for num in p.numsToGoogle:
         
         # create new task of type 'proc', pass name of file to process as a param
         yield trs.Task("proc", f"proc_{num}", [num])
