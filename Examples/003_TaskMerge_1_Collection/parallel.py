@@ -21,7 +21,7 @@ def rule_init(TaskKey, TaskData):
     # for each number in params
     for i, num in enumerate(p.numsToGoogle):
         
-        # create new task of type 'proc', pass name of file to process as a param
+        # create new task of type 'proc', pass number to google
         yield trs.Task("proc", f"proc_{num}", [(i, num)])
     
     # if the final page is not full
